@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useProfile } from "@/hooks/useProfile";
 import { TrendingUp, TrendingDown, Wallet, Target } from "lucide-react";
@@ -140,6 +141,47 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Budget Progress */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-lg">Monthly Budget</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">
+                €{stats.totalExpenses.toFixed(2)} of €{stats.budget.toFixed(2)}
+              </span>
+              <span
+                className={`font-semibold ${
+                  stats.budgetUsed >= 100
+                    ? "text-destructive"
+                    : stats.budgetUsed >= 80
+                    ? "text-warning"
+                    : "text-success"
+                }`}
+              >
+                {stats.budgetUsed.toFixed(0)}%
+              </span>
+            </div>
+            <Progress
+              value={Math.min(stats.budgetUsed, 100)}
+              className={`h-3 ${
+                stats.budgetUsed >= 100
+                  ? "[&>div]:bg-destructive"
+                  : stats.budgetUsed >= 80
+                  ? "[&>div]:bg-warning"
+                  : "[&>div]:bg-success"
+              }`}
+            />
+            {stats.budgetUsed >= 100 && (
+              <p className="text-xs text-destructive font-medium">⚠️ You've exceeded your monthly budget!</p>
+            )}
+            {stats.budgetUsed >= 80 && stats.budgetUsed < 100 && (
+              <p className="text-xs text-warning font-medium">⚡ You're approaching your budget limit.</p>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Charts */}
         <div className="grid gap-6 lg:grid-cols-2">
