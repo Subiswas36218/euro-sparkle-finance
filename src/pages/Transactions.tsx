@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
-import { Plus, Upload, Pencil, Trash2, Search, Repeat } from "lucide-react";
+import { Plus, Upload, Pencil, Trash2, Search, Repeat, Download, FileText } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -141,12 +141,88 @@ export default function Transactions() {
     return true;
   });
 
+  const exportCSV = () => {
+    const headers = ["Date", "Description", "Category", "Type", "Amount", "Recurring"];
+    const rows = filtered.map((tx) => [
+      tx.date,
+      `"${tx.description}"`,
+      tx.category || "Uncategorized",
+      tx.type,
+      (tx.type === "expense" ? "-" : "") + Number(tx.amount).toFixed(2),
+      tx.recurring_frequency || "none",
+    ]);
+    const csv = [headers.join(","), ...rows.map((r) => r.join(","))].join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `transactions_${format(new Date(), "yyyy-MM-dd")}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("CSV exported");
+  };
+
+  const exportPDF = () => {
+    const win = window.open("", "_blank");
+    if (!win) { toast.error("Please allow popups"); return; }
+
+    const totalIncome = filtered.filter((t) => t.type === "income").reduce((s, t) => s + Number(t.amount), 0);
+    const totalExpenses = filtered.filter((t) => t.type === "expense").reduce((s, t) => s + Number(t.amount), 0);
+
+    win.document.write(`<!DOCTYPE html><html><head><title>Transaction Report</title>
+      <style>
+        body { font-family: 'Segoe UI', sans-serif; padding: 40px; color: #1a1a2e; }
+        h1 { color: #1e40af; margin-bottom: 4px; }
+        .subtitle { color: #6b7280; margin-bottom: 24px; }
+        .summary { display: flex; gap: 24px; margin-bottom: 24px; }
+        .summary-card { padding: 12px 20px; border-radius: 8px; }
+        .income { background: #ecfdf5; color: #16a34a; }
+        .expense { background: #fef2f2; color: #dc2626; }
+        .balance { background: #eff6ff; color: #1e40af; }
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 8px 12px; border-bottom: 2px solid #e5e7eb; color: #6b7280; font-size: 12px; text-transform: uppercase; }
+        td { padding: 8px 12px; border-bottom: 1px solid #f3f4f6; font-size: 14px; }
+        .amount-income { color: #16a34a; font-weight: 600; }
+        .amount-expense { color: #dc2626; font-weight: 600; }
+        @media print { body { padding: 20px; } }
+      </style>
+    </head><body>
+      <h1>Transaction Report</h1>
+      <p class="subtitle">Generated on ${format(new Date(), "MMMM d, yyyy")} · ${filtered.length} transactions</p>
+      <div class="summary">
+        <div class="summary-card income"><strong>Income:</strong> €${totalIncome.toFixed(2)}</div>
+        <div class="summary-card expense"><strong>Expenses:</strong> €${totalExpenses.toFixed(2)}</div>
+        <div class="summary-card balance"><strong>Balance:</strong> €${(totalIncome - totalExpenses).toFixed(2)}</div>
+      </div>
+      <table>
+        <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th></tr></thead>
+        <tbody>
+          ${filtered.map((tx) => `<tr>
+            <td>${format(new Date(tx.date), "MMM d, yyyy")}</td>
+            <td>${tx.description}</td>
+            <td>${tx.category || "Uncategorized"}</td>
+            <td>${tx.type}</td>
+            <td class="amount-${tx.type}">${tx.type === "income" ? "+" : "-"}€${Number(tx.amount).toFixed(2)}</td>
+          </tr>`).join("")}
+        </tbody>
+      </table>
+    </body></html>`);
+    win.document.close();
+    setTimeout(() => win.print(), 500);
+  };
+
   return (
     <AppLayout>
       <div className="space-y-6">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <h1 className="font-display text-3xl font-bold">Transactions</h1>
           <div className="flex gap-2">
+            <Button variant="outline" className="gap-2" onClick={exportCSV}>
+              <Download className="h-4 w-4" /> CSV
+            </Button>
+            <Button variant="outline" className="gap-2" onClick={exportPDF}>
+              <FileText className="h-4 w-4" /> PDF
+            </Button>
             <Button variant="outline" className="gap-2" onClick={() => fileRef.current?.click()}>
               <Upload className="h-4 w-4" /> Import CSV
             </Button>
