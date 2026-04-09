@@ -5,7 +5,8 @@ import { Progress } from "@/components/ui/progress";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useProfile } from "@/hooks/useProfile";
 import { useCategoryBudgets } from "@/hooks/useCategoryBudgets";
-import { TrendingUp, TrendingDown, Wallet, Target, ArrowUpRight, ArrowDownRight, Minus, AlertTriangle } from "lucide-react";
+import { useSavingsGoals } from "@/hooks/useSavingsGoals";
+import { TrendingUp, TrendingDown, Wallet, Target, ArrowUpRight, ArrowDownRight, Minus, AlertTriangle, PiggyBank } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { format, startOfMonth, endOfMonth, isWithinInterval, subMonths } from "date-fns";
 import { convertCurrency, formatMoney, getCurrencySymbol } from "@/lib/currency";
@@ -16,6 +17,7 @@ export default function Dashboard() {
   const { data: transactions = [], isLoading } = useTransactions();
   const { data: profile } = useProfile();
   const { data: categoryBudgets = [] } = useCategoryBudgets();
+  const { data: savingsGoals = [] } = useSavingsGoals();
 
   const baseCurrency = profile?.currency || "EUR";
   const sym = getCurrencySymbol(baseCurrency);
@@ -395,6 +397,45 @@ export default function Dashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Savings Goals Summary */}
+        {savingsGoals.length > 0 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="font-display text-lg flex items-center gap-2">
+                <PiggyBank className="h-5 w-5 text-primary" />
+                Savings Goals
+              </CardTitle>
+              <a href="/savings" className="text-xs text-primary hover:underline">View all →</a>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {savingsGoals.slice(0, 4).map((goal) => {
+                const pct = Number(goal.target_amount) > 0
+                  ? (Number(goal.current_amount) / Number(goal.target_amount)) * 100
+                  : 0;
+                const isComplete = pct >= 100;
+                return (
+                  <div key={goal.id} className="space-y-1.5">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-1.5 font-medium">
+                        <span>{goal.icon}</span> {goal.name}
+                        {isComplete && <span className="text-xs text-success">✓</span>}
+                      </span>
+                      <span className="text-muted-foreground">
+                        {sym}{Number(goal.current_amount).toFixed(0)} / {sym}{Number(goal.target_amount).toFixed(0)}
+                      </span>
+                    </div>
+                    <Progress
+                      value={Math.min(pct, 100)}
+                      className={`h-2 ${isComplete ? "[&>div]:bg-success" : ""}`}
+                      style={!isComplete ? { ["--goal-color" as any]: goal.color } : undefined}
+                    />
+                  </div>
+                );
+              })}
+            </CardContent>
+          </Card>
+        )}
 
         {/* Recent Transactions */}
         <Card>
