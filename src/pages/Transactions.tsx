@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
-import { Plus, Upload, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Upload, Pencil, Trash2, Search, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ export default function Transactions() {
   const [categorizing, setCategorizing] = useState(false);
   const [form, setForm] = useState({
     description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" as "income" | "expense",
+    recurringFrequency: "none" as "none" | "weekly" | "monthly" | "yearly",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -52,18 +53,21 @@ export default function Transactions() {
   }, [editId]);
 
   const resetForm = () => {
-    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" });
+    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense", recurringFrequency: "none" });
     setEditId(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const nextDate = form.recurringFrequency !== "none" ? form.date : null;
     const payload = {
       description: form.description.trim(),
       amount: parseFloat(form.amount),
       category: form.category || null,
       date: form.date,
       type: form.type as "income" | "expense",
+      recurring_frequency: form.recurringFrequency as "none" | "weekly" | "monthly" | "yearly",
+      next_recurrence_date: nextDate,
     };
 
     if (editId) {
@@ -81,6 +85,7 @@ export default function Transactions() {
       category: tx.category || "",
       date: tx.date,
       type: tx.type,
+      recurringFrequency: tx.recurring_frequency || "none",
     });
     setDialogOpen(true);
   };
