@@ -8,7 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
-import { Plus, Upload, Pencil, Trash2, Search } from "lucide-react";
+import { Plus, Upload, Pencil, Trash2, Search, Repeat } from "lucide-react";
 import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -30,6 +30,7 @@ export default function Transactions() {
   const [categorizing, setCategorizing] = useState(false);
   const [form, setForm] = useState({
     description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" as "income" | "expense",
+    recurringFrequency: "none" as "none" | "weekly" | "monthly" | "yearly",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -52,18 +53,21 @@ export default function Transactions() {
   }, [editId]);
 
   const resetForm = () => {
-    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" });
+    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense", recurringFrequency: "none" });
     setEditId(null);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const nextDate = form.recurringFrequency !== "none" ? form.date : null;
     const payload = {
       description: form.description.trim(),
       amount: parseFloat(form.amount),
       category: form.category || null,
       date: form.date,
       type: form.type as "income" | "expense",
+      recurring_frequency: form.recurringFrequency as "none" | "weekly" | "monthly" | "yearly",
+      next_recurrence_date: nextDate,
     };
 
     if (editId) {
@@ -81,6 +85,7 @@ export default function Transactions() {
       category: tx.category || "",
       date: tx.date,
       type: tx.type,
+      recurringFrequency: tx.recurring_frequency || "none",
     });
     setDialogOpen(true);
   };
@@ -198,6 +203,18 @@ export default function Transactions() {
                       </Select>
                     </div>
                   </div>
+                  <div>
+                    <Label>Recurring</Label>
+                    <Select value={form.recurringFrequency} onValueChange={(v) => setForm({ ...form, recurringFrequency: v as any })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">One-time</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button type="submit" className="w-full" disabled={addTransaction.isPending || updateTransaction.isPending}>
                     {editId ? "Update" : "Add"} Transaction
                   </Button>
@@ -255,7 +272,14 @@ export default function Transactions() {
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{CATEGORY_ICONS[tx.category || "Other"] || "📦"}</span>
                       <div>
-                        <p className="text-sm font-medium">{tx.description}</p>
+                        <p className="flex items-center gap-1 text-sm font-medium">
+                          {tx.description}
+                          {tx.recurring_frequency && tx.recurring_frequency !== "none" && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                              <Repeat className="h-2.5 w-2.5" /> {tx.recurring_frequency}
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {tx.category || "Uncategorized"} · {format(new Date(tx.date), "MMM d, yyyy")}
                         </p>

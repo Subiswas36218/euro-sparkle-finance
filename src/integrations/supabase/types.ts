@@ -76,6 +76,8 @@ export type Database = {
           date: string
           description: string
           id: string
+          next_recurrence_date: string | null
+          recurring_frequency: Database["public"]["Enums"]["recurring_frequency"]
           type: Database["public"]["Enums"]["transaction_type"]
           updated_at: string
           user_id: string
@@ -87,6 +89,8 @@ export type Database = {
           date?: string
           description: string
           id?: string
+          next_recurrence_date?: string | null
+          recurring_frequency?: Database["public"]["Enums"]["recurring_frequency"]
           type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
           user_id: string
@@ -98,6 +102,8 @@ export type Database = {
           date?: string
           description?: string
           id?: string
+          next_recurrence_date?: string | null
+          recurring_frequency?: Database["public"]["Enums"]["recurring_frequency"]
           type?: Database["public"]["Enums"]["transaction_type"]
           updated_at?: string
           user_id?: string
@@ -109,9 +115,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_recurring_transactions: { Args: never; Returns: undefined }
     }
     Enums: {
+      recurring_frequency: "none" | "weekly" | "monthly" | "yearly"
       transaction_type: "income" | "expense"
     }
     CompositeTypes: {
@@ -240,6 +247,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      recurring_frequency: ["none", "weekly", "monthly", "yearly"],
       transaction_type: ["income", "expense"],
     },
   },
