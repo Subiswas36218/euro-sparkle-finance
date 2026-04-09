@@ -290,7 +290,7 @@ export default function Insights() {
                       </div>
                     </div>
                   ))}
-                  {chatLoading && assistantSoFar === "" && (
+                  {chatLoading && chatMessages[chatMessages.length - 1]?.role === "user" && (
                     <div className="flex justify-start">
                       <div className="rounded-lg border bg-card px-4 py-2">
                         <Loader2 className="h-4 w-4 animate-spin" />
