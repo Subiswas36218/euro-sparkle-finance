@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currency";
 
 const CATEGORY_ICONS: Record<string, string> = {
   Food: "🍔", Transport: "🚗", Housing: "🏠", Entertainment: "🎬",
@@ -23,6 +25,8 @@ export default function Transactions() {
   const { data: transactions = [], isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const { data: categories = [] } = useCategories();
   const { user } = useAuth();
+  const { data: profile } = useProfile();
+  const defaultCurrency = profile?.currency || "EUR";
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -31,6 +35,7 @@ export default function Transactions() {
   const [form, setForm] = useState({
     description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" as "income" | "expense",
     recurringFrequency: "none" as "none" | "weekly" | "monthly" | "yearly",
+    currency: defaultCurrency,
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -53,7 +58,7 @@ export default function Transactions() {
   }, [editId]);
 
   const resetForm = () => {
-    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense", recurringFrequency: "none" });
+    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense", recurringFrequency: "none", currency: defaultCurrency });
     setEditId(null);
   };
 
@@ -68,6 +73,7 @@ export default function Transactions() {
       type: form.type as "income" | "expense",
       recurring_frequency: form.recurringFrequency as "none" | "weekly" | "monthly" | "yearly",
       next_recurrence_date: nextDate,
+      currency: form.currency,
     };
 
     if (editId) {
@@ -86,6 +92,7 @@ export default function Transactions() {
       date: tx.date,
       type: tx.type,
       recurringFrequency: tx.recurring_frequency || "none",
+      currency: (tx as any).currency || defaultCurrency,
     });
     setDialogOpen(true);
   };
@@ -246,10 +253,21 @@ export default function Transactions() {
                       placeholder="e.g. Grocery shopping at Lidl"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label>Amount (€)</Label>
+                      <Label>Amount</Label>
                       <Input type="number" step="0.01" min="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label>Currency</Label>
+                      <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {SUPPORTED_CURRENCIES.map((c) => (
+                            <SelectItem key={c} value={c}>{getCurrencySymbol(c)} {c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label>Type</Label>
@@ -363,7 +381,7 @@ export default function Transactions() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-sm font-semibold ${tx.type === "income" ? "text-success" : "text-destructive"}`}>
-                        {tx.type === "income" ? "+" : "-"}€{Number(tx.amount).toFixed(2)}
+                        {tx.type === "income" ? "+" : "-"}{getCurrencySymbol((tx as any).currency || defaultCurrency)}{Number(tx.amount).toFixed(2)}
                       </span>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(tx)}>
                         <Pencil className="h-4 w-4" />
