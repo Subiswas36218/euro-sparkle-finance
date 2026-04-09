@@ -381,7 +381,7 @@ export default function Transactions() {
                     </div>
                     <div className="flex items-center gap-3">
                       <span className={`text-sm font-semibold ${tx.type === "income" ? "text-success" : "text-destructive"}`}>
-                        {tx.type === "income" ? "+" : "-"}€{Number(tx.amount).toFixed(2)}
+                        {tx.type === "income" ? "+" : "-"}{getCurrencySymbol((tx as any).currency || defaultCurrency)}{Number(tx.amount).toFixed(2)}
                       </span>
                       <Button variant="ghost" size="icon" onClick={() => handleEdit(tx)}>
                         <Pencil className="h-4 w-4" />
