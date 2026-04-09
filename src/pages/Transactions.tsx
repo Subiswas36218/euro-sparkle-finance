@@ -272,7 +272,14 @@ export default function Transactions() {
                     <div className="flex items-center gap-3">
                       <span className="text-xl">{CATEGORY_ICONS[tx.category || "Other"] || "📦"}</span>
                       <div>
-                        <p className="text-sm font-medium">{tx.description}</p>
+                        <p className="flex items-center gap-1 text-sm font-medium">
+                          {tx.description}
+                          {tx.recurring_frequency && tx.recurring_frequency !== "none" && (
+                            <span className="inline-flex items-center gap-0.5 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                              <Repeat className="h-2.5 w-2.5" /> {tx.recurring_frequency}
+                            </span>
+                          )}
+                        </p>
                         <p className="text-xs text-muted-foreground">
                           {tx.category || "Uncategorized"} · {format(new Date(tx.date), "MMM d, yyyy")}
                         </p>
