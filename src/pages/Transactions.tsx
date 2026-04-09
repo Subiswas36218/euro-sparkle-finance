@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useCallback } from "react";
 import { AppLayout } from "@/components/AppLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,12 +27,29 @@ export default function Transactions() {
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
+  const [categorizing, setCategorizing] = useState(false);
   const [form, setForm] = useState({
     description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" as "income" | "expense",
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterType, setFilterType] = useState("all");
+
+  const autoCategorize = useCallback(async (description: string) => {
+    if (!description.trim() || editId) return;
+    setCategorizing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("categorize-transaction", {
+        body: { description: description.trim() },
+      });
+      if (!error && data?.category) {
+        setForm((prev) => ({ ...prev, category: data.category }));
+      }
+    } catch {
+      // silently fail — user can pick manually
+    }
+    setCategorizing(false);
+  }, [editId]);
 
   const resetForm = () => {
     setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" });
@@ -140,7 +157,13 @@ export default function Transactions() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div>
                     <Label>Description</Label>
-                    <Input value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+                    <Input
+                      value={form.description}
+                      onChange={(e) => setForm({ ...form, description: e.target.value })}
+                      onBlur={(e) => autoCategorize(e.target.value)}
+                      required
+                      placeholder="e.g. Grocery shopping at Lidl"
+                    />
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
