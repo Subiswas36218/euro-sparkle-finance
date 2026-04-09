@@ -4,15 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useProfile } from "@/hooks/useProfile";
-import { TrendingUp, TrendingDown, Wallet, Target } from "lucide-react";
+import { TrendingUp, TrendingDown, Wallet, Target, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { format, startOfMonth, endOfMonth, isWithinInterval, subMonths } from "date-fns";
+import { convertCurrency, formatMoney, getCurrencySymbol } from "@/lib/currency";
 
 const COLORS = ["#EF4444", "#F59E0B", "#3B82F6", "#8B5CF6", "#10B981", "#EC4899", "#6366F1", "#6B7280"];
 
 export default function Dashboard() {
   const { data: transactions = [], isLoading } = useTransactions();
   const { data: profile } = useProfile();
+
+  const baseCurrency = profile?.currency || "EUR";
+  const sym = getCurrencySymbol(baseCurrency);
+
+  // Helper to convert a transaction amount to base currency
+  const toBase = (amount: number, txCurrency?: string) =>
+    convertCurrency(amount, txCurrency || "EUR", baseCurrency);
 
   const stats = useMemo(() => {
     const now = new Date();
@@ -25,16 +33,48 @@ export default function Dashboard() {
 
     const totalIncome = thisMonth
       .filter((t) => t.type === "income")
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+      .reduce((sum, t) => sum + toBase(Number(t.amount), (t as any).currency), 0);
     const totalExpenses = thisMonth
       .filter((t) => t.type === "expense")
-      .reduce((sum, t) => sum + Number(t.amount), 0);
+      .reduce((sum, t) => sum + toBase(Number(t.amount), (t as any).currency), 0);
     const balance = totalIncome - totalExpenses;
     const budget = profile?.monthly_budget ?? 2000;
     const budgetUsed = budget > 0 ? (totalExpenses / budget) * 100 : 0;
 
     return { totalIncome, totalExpenses, balance, budget, budgetUsed };
-  }, [transactions, profile]);
+  }, [transactions, profile, baseCurrency]);
+
+  // Monthly comparison
+  const comparison = useMemo(() => {
+    const now = new Date();
+    const thisStart = startOfMonth(now);
+    const thisEnd = endOfMonth(now);
+    const lastStart = startOfMonth(subMonths(now, 1));
+    const lastEnd = endOfMonth(subMonths(now, 1));
+
+    const thisExpenses = transactions
+      .filter((t) => t.type === "expense" && isWithinInterval(new Date(t.date), { start: thisStart, end: thisEnd }))
+      .reduce((s, t) => s + toBase(Number(t.amount), (t as any).currency), 0);
+    const lastExpenses = transactions
+      .filter((t) => t.type === "expense" && isWithinInterval(new Date(t.date), { start: lastStart, end: lastEnd }))
+      .reduce((s, t) => s + toBase(Number(t.amount), (t as any).currency), 0);
+    const thisIncome = transactions
+      .filter((t) => t.type === "income" && isWithinInterval(new Date(t.date), { start: thisStart, end: thisEnd }))
+      .reduce((s, t) => s + toBase(Number(t.amount), (t as any).currency), 0);
+    const lastIncome = transactions
+      .filter((t) => t.type === "income" && isWithinInterval(new Date(t.date), { start: lastStart, end: lastEnd }))
+      .reduce((s, t) => s + toBase(Number(t.amount), (t as any).currency), 0);
+
+    const expenseChange = lastExpenses > 0 ? ((thisExpenses - lastExpenses) / lastExpenses) * 100 : 0;
+    const incomeChange = lastIncome > 0 ? ((thisIncome - lastIncome) / lastIncome) * 100 : 0;
+
+    return {
+      thisExpenses, lastExpenses, thisIncome, lastIncome,
+      expenseChange, incomeChange,
+      lastMonthName: format(subMonths(now, 1), "MMMM"),
+      thisMonthName: format(now, "MMMM"),
+    };
+  }, [transactions, baseCurrency]);
 
   const categoryData = useMemo(() => {
     const now = new Date();
