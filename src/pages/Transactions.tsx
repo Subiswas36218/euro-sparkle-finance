@@ -13,6 +13,8 @@ import { format } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
+import { SUPPORTED_CURRENCIES, getCurrencySymbol } from "@/lib/currency";
 
 const CATEGORY_ICONS: Record<string, string> = {
   Food: "🍔", Transport: "🚗", Housing: "🏠", Entertainment: "🎬",
@@ -23,6 +25,8 @@ export default function Transactions() {
   const { data: transactions = [], isLoading, addTransaction, updateTransaction, deleteTransaction } = useTransactions();
   const { data: categories = [] } = useCategories();
   const { user } = useAuth();
+  const { data: profile } = useProfile();
+  const defaultCurrency = profile?.currency || "EUR";
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -31,6 +35,7 @@ export default function Transactions() {
   const [form, setForm] = useState({
     description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense" as "income" | "expense",
     recurringFrequency: "none" as "none" | "weekly" | "monthly" | "yearly",
+    currency: defaultCurrency,
   });
   const [searchQuery, setSearchQuery] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -53,7 +58,7 @@ export default function Transactions() {
   }, [editId]);
 
   const resetForm = () => {
-    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense", recurringFrequency: "none" });
+    setForm({ description: "", amount: "", category: "", date: format(new Date(), "yyyy-MM-dd"), type: "expense", recurringFrequency: "none", currency: defaultCurrency });
     setEditId(null);
   };
 
@@ -68,6 +73,7 @@ export default function Transactions() {
       type: form.type as "income" | "expense",
       recurring_frequency: form.recurringFrequency as "none" | "weekly" | "monthly" | "yearly",
       next_recurrence_date: nextDate,
+      currency: form.currency,
     };
 
     if (editId) {
@@ -86,6 +92,7 @@ export default function Transactions() {
       date: tx.date,
       type: tx.type,
       recurringFrequency: tx.recurring_frequency || "none",
+      currency: (tx as any).currency || defaultCurrency,
     });
     setDialogOpen(true);
   };
