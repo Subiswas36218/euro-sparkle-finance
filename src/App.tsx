@@ -14,6 +14,7 @@ import Dashboard from "./pages/Dashboard";
 import Transactions from "./pages/Transactions";
 import Insights from "./pages/Insights";
 import Settings from "./pages/Settings";
+import SavingsGoals from "./pages/SavingsGoals";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -42,6 +43,10 @@ const App = () => (
               <Route
                 path="/insights"
                 element={<ProtectedRoute><Insights /></ProtectedRoute>}
+              />
+              <Route
+                path="/savings"
+                element={<ProtectedRoute><SavingsGoals /></ProtectedRoute>}
               />
               <Route
                 path="/settings"
