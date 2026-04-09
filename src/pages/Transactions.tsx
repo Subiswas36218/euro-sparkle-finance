@@ -187,9 +187,9 @@ export default function Transactions() {
                       <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} required />
                     </div>
                     <div>
-                      <Label>Category</Label>
+                      <Label>Category {categorizing && <span className="text-xs text-muted-foreground">(AI suggesting…)</span>}</Label>
                       <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
-                        <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                        <SelectTrigger><SelectValue placeholder={categorizing ? "Categorizing…" : "Select"} /></SelectTrigger>
                         <SelectContent>
                           {categories.map((c) => (
                             <SelectItem key={c.id} value={c.name}>{c.icon} {c.name}</SelectItem>
