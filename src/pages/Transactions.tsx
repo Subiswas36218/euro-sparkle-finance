@@ -203,6 +203,18 @@ export default function Transactions() {
                       </Select>
                     </div>
                   </div>
+                  <div>
+                    <Label>Recurring</Label>
+                    <Select value={form.recurringFrequency} onValueChange={(v) => setForm({ ...form, recurringFrequency: v as any })}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">One-time</SelectItem>
+                        <SelectItem value="weekly">Weekly</SelectItem>
+                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="yearly">Yearly</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <Button type="submit" className="w-full" disabled={addTransaction.isPending || updateTransaction.isPending}>
                     {editId ? "Update" : "Add"} Transaction
                   </Button>
