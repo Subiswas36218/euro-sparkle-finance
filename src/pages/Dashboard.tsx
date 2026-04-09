@@ -140,7 +140,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Income</p>
-                <p className="text-2xl font-bold text-success">€{stats.totalIncome.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-success">{sym}{stats.totalIncome.toFixed(2)}</p>
               </div>
             </CardContent>
           </Card>
@@ -152,7 +152,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Expenses</p>
-                <p className="text-2xl font-bold text-destructive">€{stats.totalExpenses.toFixed(2)}</p>
+                <p className="text-2xl font-bold text-destructive">{sym}{stats.totalExpenses.toFixed(2)}</p>
               </div>
             </CardContent>
           </Card>
@@ -164,7 +164,7 @@ export default function Dashboard() {
               </div>
               <div>
                 <p className="text-sm text-muted-foreground">Balance</p>
-                <p className="text-2xl font-bold">€{stats.balance.toFixed(2)}</p>
+                <p className="text-2xl font-bold">{sym}{stats.balance.toFixed(2)}</p>
               </div>
             </CardContent>
           </Card>
@@ -190,7 +190,7 @@ export default function Dashboard() {
           <CardContent className="space-y-2">
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">
-                €{stats.totalExpenses.toFixed(2)} of €{stats.budget.toFixed(2)}
+                {sym}{stats.totalExpenses.toFixed(2)} of {sym}{stats.budget.toFixed(2)}
               </span>
               <span
                 className={`font-semibold ${
@@ -220,6 +220,57 @@ export default function Dashboard() {
             {stats.budgetUsed >= 80 && stats.budgetUsed < 100 && (
               <p className="text-xs text-warning font-medium">⚡ You're approaching your budget limit.</p>
             )}
+          </CardContent>
+        </Card>
+
+        {/* Monthly Comparison */}
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="font-display text-lg">Month-over-Month</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              {/* Expenses comparison */}
+              <div className="rounded-lg border p-4 space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Expenses</p>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-xl font-bold text-destructive">{sym}{comparison.thisExpenses.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{comparison.thisMonthName}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">{sym}{comparison.lastExpenses.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{comparison.lastMonthName}</p>
+                  </div>
+                </div>
+                {comparison.lastExpenses > 0 && (
+                  <div className={`flex items-center gap-1 text-sm font-semibold ${comparison.expenseChange > 0 ? "text-destructive" : comparison.expenseChange < 0 ? "text-success" : "text-muted-foreground"}`}>
+                    {comparison.expenseChange > 0 ? <ArrowUpRight className="h-4 w-4" /> : comparison.expenseChange < 0 ? <ArrowDownRight className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+                    {Math.abs(comparison.expenseChange).toFixed(1)}% {comparison.expenseChange > 0 ? "more" : comparison.expenseChange < 0 ? "less" : "same"}
+                  </div>
+                )}
+              </div>
+              {/* Income comparison */}
+              <div className="rounded-lg border p-4 space-y-2">
+                <p className="text-sm font-medium text-muted-foreground">Income</p>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-xl font-bold text-success">{sym}{comparison.thisIncome.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{comparison.thisMonthName}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-muted-foreground">{sym}{comparison.lastIncome.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">{comparison.lastMonthName}</p>
+                  </div>
+                </div>
+                {comparison.lastIncome > 0 && (
+                  <div className={`flex items-center gap-1 text-sm font-semibold ${comparison.incomeChange > 0 ? "text-success" : comparison.incomeChange < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                    {comparison.incomeChange > 0 ? <ArrowUpRight className="h-4 w-4" /> : comparison.incomeChange < 0 ? <ArrowDownRight className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+                    {Math.abs(comparison.incomeChange).toFixed(1)}% {comparison.incomeChange > 0 ? "more" : comparison.incomeChange < 0 ? "less" : "same"}
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -273,7 +324,7 @@ export default function Dashboard() {
                       ))}
                     </Pie>
                     <Tooltip
-                      formatter={(value: number) => `€${value.toFixed(2)}`}
+                      formatter={(value: number) => `${sym}${value.toFixed(2)}`}
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
@@ -324,7 +375,7 @@ export default function Dashboard() {
                     <span
                       className={`text-sm font-semibold ${tx.type === "income" ? "text-success" : "text-destructive"}`}
                     >
-                      {tx.type === "income" ? "+" : "-"}€{Number(tx.amount).toFixed(2)}
+                      {tx.type === "income" ? "+" : "-"}{sym}{Number(tx.amount).toFixed(2)}
                     </span>
                   </div>
                 ))}
