@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { LayoutDashboard, ArrowLeftRight, Lightbulb, LogOut, Menu, X } from "lucide-react";
+import { LayoutDashboard, ArrowLeftRight, Lightbulb, Settings, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/transactions", label: "Transactions", icon: ArrowLeftRight },
   { to: "/insights", label: "Insights", icon: Lightbulb },
+  { to: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
