@@ -253,10 +253,21 @@ export default function Transactions() {
                       placeholder="e.g. Grocery shopping at Lidl"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
-                      <Label>Amount (€)</Label>
+                      <Label>Amount</Label>
                       <Input type="number" step="0.01" min="0.01" value={form.amount} onChange={(e) => setForm({ ...form, amount: e.target.value })} required />
+                    </div>
+                    <div>
+                      <Label>Currency</Label>
+                      <Select value={form.currency} onValueChange={(v) => setForm({ ...form, currency: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {SUPPORTED_CURRENCIES.map((c) => (
+                            <SelectItem key={c} value={c}>{getCurrencySymbol(c)} {c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div>
                       <Label>Type</Label>
