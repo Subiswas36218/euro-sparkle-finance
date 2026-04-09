@@ -123,7 +123,7 @@ CI/CD from prompt updates
 
 🚀 Getting Started
 1. Clone Repository
-git clone https://github.com/your-username/fin-copilot.git
+git clone https://github.com/Subiswas36218/euro-sparkle-finance
 cd fin-copilot
 
 ☁️ Deployment (Lovable AI)
