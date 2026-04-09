@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useProfile } from "@/hooks/useProfile";
-import { TrendingUp, TrendingDown, Wallet, Target, ArrowUpRight, ArrowDownRight, Minus } from "lucide-react";
+import { useCategoryBudgets } from "@/hooks/useCategoryBudgets";
+import { TrendingUp, TrendingDown, Wallet, Target, ArrowUpRight, ArrowDownRight, Minus, AlertTriangle } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { format, startOfMonth, endOfMonth, isWithinInterval, subMonths } from "date-fns";
 import { convertCurrency, formatMoney, getCurrencySymbol } from "@/lib/currency";
@@ -14,6 +15,7 @@ const COLORS = ["#EF4444", "#F59E0B", "#3B82F6", "#8B5CF6", "#10B981", "#EC4899"
 export default function Dashboard() {
   const { data: transactions = [], isLoading } = useTransactions();
   const { data: profile } = useProfile();
+  const { data: categoryBudgets = [] } = useCategoryBudgets();
 
   const baseCurrency = profile?.currency || "EUR";
   const sym = getCurrencySymbol(baseCurrency);
@@ -222,6 +224,51 @@ export default function Dashboard() {
             )}
           </CardContent>
         </Card>
+
+        {/* Category Spending Alerts */}
+        {categoryBudgets.length > 0 && (() => {
+          const alerts = categoryBudgets
+            .map((b) => {
+              const catSpend = categoryData.find((c) => c.name === b.category);
+              const spent = catSpend?.value || 0;
+              const pct = b.limit_amount > 0 ? (spent / b.limit_amount) * 100 : 0;
+              return { ...b, spent, pct };
+            })
+            .filter((a) => a.pct >= 80)
+            .sort((a, b) => b.pct - a.pct);
+
+          if (alerts.length === 0) return null;
+
+          return (
+            <Card className="border-warning/50">
+              <CardHeader className="pb-2">
+                <CardTitle className="font-display text-lg flex items-center gap-2">
+                  <AlertTriangle className="h-5 w-5 text-warning" />
+                  Category Spending Alerts
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {alerts.map((a) => (
+                  <div key={a.id} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-medium">{a.category}</span>
+                      <span className={`font-semibold ${a.pct >= 100 ? "text-destructive" : "text-warning"}`}>
+                        {sym}{a.spent.toFixed(2)} / {sym}{Number(a.limit_amount).toFixed(2)} ({a.pct.toFixed(0)}%)
+                      </span>
+                    </div>
+                    <Progress
+                      value={Math.min(a.pct, 100)}
+                      className={`h-2 ${a.pct >= 100 ? "[&>div]:bg-destructive" : "[&>div]:bg-warning"}`}
+                    />
+                    {a.pct >= 100 && (
+                      <p className="text-xs text-destructive font-medium">🚨 Over budget by {sym}{(a.spent - Number(a.limit_amount)).toFixed(2)}</p>
+                    )}
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          );
+        })()}
 
         {/* Monthly Comparison */}
         <Card>
